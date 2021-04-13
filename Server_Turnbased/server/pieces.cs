@@ -1,7 +1,7 @@
 // brickData dataBlock\tpiece space\tcolor
 // create a new turnbasedpiece, this is like a datablock for the pieces
 
-function server_CreatePiece(%name,%brickData,%descriptors)
+function server_CreatePiece(%name,%brickData,%descriptions,%values,%abilities)
 {
     %p = new ScriptObject("TBP" @ %name)
     {
@@ -11,12 +11,26 @@ function server_CreatePiece(%name,%brickData,%descriptors)
         brickData = %brickData;
     };
 
-    //sort out the %descriptors field
+    //sort out the descriptions field
     %c = 0;
-    while((%name = getField(%descriptors,%c)) !$= "")
+    while((%desc = getField(%descriptions,%c)) !$= "")
     {
-        %p.data[%c / 3] = getFields(%descriptors,%c,%c + 2);
-        %c += 3;
+        %p.desc[%c] = %desc;
+        %c++;
+    }
+    //sort out the values field
+    %c = 0;
+    while((%field = getField(%values,%c)) !$= "")
+    {
+        %p.value[getWord(%field,0)] = getWords(%field,1);
+        %c++;
+    }
+    //sort out the abilities field
+    %c = 0;
+    while((%field = getField(%abilities,%c)) !$= "")
+    {
+        %p.ability[%c] = %field;
+        %c++;
     }
 
     $Turnabsed::Server::PieceDataGroup.add(%p);
@@ -147,15 +161,26 @@ function PieceInstance::TempPiece(%piece,%vector)
 function PieceInstance::OnPieceInteract(%piece,%client)
 {
     %c = 0;
-    while((%field = %piece.pieceData.data[%c]) !$= "")
+    while((%desc = %piece.pieceData.desc[%c]) !$= "")
     {
-        %client.ChatMessage(getField(%field,2));
+        %client.ChatMessage(%desc);
 
         %c++;
     }
-
+    //print ability prompt when the client controls a unit.
     if(%client == %piece.client)
     {
-        %client.ChatMessage("Abilities go here");
+        %client.chatmessage("<color:00FF00><font:palatinolinotype:14>Press the numpad key to use the ability:");
+        %client.chatmessage("<color:00FF00><font:palatinolinotype:14>| 0 : Deselect");
+
+        %c = 0;
+        while((%field = %piece.pieceData.ability[%c]) !$= "")
+        {
+            %client.chatMessage("<color:00FF00><font:palatinolinotype:14>|" SPC %c + 1 SPC ":" SPC getWord(%field,0));
+
+            %c++;
+        }
+        
+        %client.TBstartAbilitySelect(%piece);
     }
 }
