@@ -170,6 +170,10 @@ function PieceInstance::OnPieceInteract(%piece,%client)
     //print ability prompt when the client controls a unit.
     if(%client == %piece.client)
     {
+        //did it start or are we already running something?
+        if(!%client.TBstartAbilityWithInput("AbilitySelect",%piece))
+            return;
+
         %client.chatmessage("<color:00FF00><font:palatinolinotype:14>Press the numpad key to use the ability:");
         %client.chatmessage("<color:00FF00><font:palatinolinotype:14>| 0 : Deselect");
 
@@ -180,7 +184,5 @@ function PieceInstance::OnPieceInteract(%piece,%client)
 
             %c++;
         }
-        
-        %client.TBstartAbilitySelect(%piece);
     }
 }
