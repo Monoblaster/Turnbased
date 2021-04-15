@@ -69,6 +69,14 @@ function TurnbasedPiece::NewPiece(%piece,%client,%vector)
     return %p;
 }
 
+//removes an instantiated brick
+function PieceInstance::KillPiece(%piece)
+{
+    %piece.PieceBricks.deleteAll();
+
+    %piece.delete();
+}
+
 //builds an instanited piece
 function PieceInstance::BuildPiece(%piece,%vector)
 {
@@ -112,20 +120,14 @@ function PieceInstance::BuildPiece(%piece,%vector)
     }
 }
 
-//removes an instantiated brick
-function PieceInstance::KillPiece(%piece)
-{
-    %piece.PieceBricks.deleteAll();
-
-    %piece.delete();
-}
-
 //adds an instantiated piece to the player's temp bricks
 function PieceInstance::TempPiece(%piece,%vector)
 {
     %brickData = %piece.pieceData.brickData;
 
     %piece.worldVector = %vector;
+
+    %client = %piece.client;
 
     %c = 0;
     while((%dataBlock = getField(%brickData,%c)) !$= "")
@@ -146,14 +148,11 @@ function PieceInstance::TempPiece(%piece,%vector)
         };
         
         //make turnbased temp bricks if it doesn't exist
-        %player = %piece.client.player;
-
-        if(!isObject(%player.turnbasedTempBricks))
+        if(!isObject(%client.turnbasedTempBricks))
         {
-            %player.turnbasedTempBricks = new scriptGroup(){};
-        }
-            
-        %piece.client.player.turnbasedTempBricks.add(%brick);
+            %client.turnbasedTempBricks = new scriptGroup(){};
+        } 
+        %client.turnbasedTempBricks.add(%brick);
         %c += 3;
     }
 }

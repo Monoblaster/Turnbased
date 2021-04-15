@@ -6,8 +6,7 @@ exec("./server/event.cs");
 
 exec("./server/ability.cs");
 
-exec("./server/loading.cs");
-
+exec("./server/newDup.cs");
 
 
 function server_TurnbasedInitialize()
