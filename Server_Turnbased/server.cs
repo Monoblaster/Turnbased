@@ -1,28 +1,27 @@
 exec("./server/pieces.cs");
 
+exec("./server/maps.cs");
+
 exec("./server/package.cs");
 
 exec("./server/event.cs");
 
 exec("./server/ability.cs");
 
-exec("./server/newDup.cs");
+exec("./server/brickData.cs");
 
 
 function server_TurnbasedInitialize()
 {
-    if($Turnbased::Server:Initialized)
-        return;
     
     $Turnabsed::Server::PieceDataGroup = new ScriptGroup(){};
+    $Turnabsed::Server::MapDataGroup = new ScriptGroup(){};
 
-    new ScriptObject("TurnbasedLoader"){};
-
+    //pieces
     server_CreatePiece(
         "Warrior"
     ,   
-        "brick1x1Data\t0 0 0.3\t34" TAB
-        "brick1x1fPrintData\t0 0 0.7\t34"
+        "Warrior"
     ,
         "<color:00FF00>Warrior : 8" TAB
         "<color:FFFFFF>Attack : 4" TAB
@@ -37,10 +36,18 @@ function server_TurnbasedInitialize()
         "Move basicMove" TAB
         "Attack basicAttack"
     );
+    //maps
+    server_CreateMap(
+        "Default"
+    ,   
+        "Default"
+    );
 
     registerOutputEvent("fxDTSBrick", "givePiece", "string 100 100", true);
-    registerOutputEvent("fxDTSBrick", "pieceInteract", "", true);
 }
 
-server_TurnbasedInitialize();
-$Turnbased::Server:Initialized = 1;
+if(!$Turnbased::Server:Initialized)
+{
+    server_TurnbasedInitialize();
+    $Turnbased::Server:Initialized = 1;
+}

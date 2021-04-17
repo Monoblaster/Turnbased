@@ -86,37 +86,25 @@ function PieceInstance::BuildPiece(%piece,%vector)
 
     %piece.worldVector = %vector;
 
-    %c = 0;
-    while((%dataBlock = getField(%brickData,%c)) !$= "")
+    //load bricks from the brickdata save
+    %brickList = turnbasedLoad(%brickData,%vector,%rotation);
+
+    //setup bricks
+    %count = %bricklest.getCount();
+    for(%c = 0; %c < %count; %c++)
     {
-        %brickPos = vectorAdd(getField(%brickData,%c + 1),%vector);
-        %brickColor = getField(%brickData,%c + 2);
+        %brick = %brickList.getObject(%c);
 
-        %brick = new fxDTSBrick()
-        {
-            dataBlock = %dataBlock;
-            position = %brickPos;
+        %brick.isPlanted = true;
 
-            rotation = "1 0 0 0";
-            
-            client = %piece.client;
-
-            colorid = %brickColor;
-            isPlanted = true;
-
-            piece = %piece;
-        };
-
-        //999999
-        %brickGroup = mainBrickGroup.getObject(1);
-        %brickGroup.add(%brick);
-
-        %brick.setTrusted(1);
         %brick.plant();
-        
+        %brick.setTrusted(true);
 
-        %piece.PieceBricks.add(%brick);
-        %c += 3;
+        %brick.piece = %piece;
+
+        %piece.pieceBricks.add(%brick);
+
+        %c++;
     }
 }
 
@@ -130,30 +118,21 @@ function PieceInstance::TempPiece(%piece,%vector)
     %client = %piece.client;
 
     %c = 0;
-    while((%dataBlock = getField(%brickData,%c)) !$= "")
+    //load bricks from the brickdata save
+    %brickList = turnbasedLoad(%brickData,%vector,%rotation);
+    //setup bricks
+    %count = %bricklest.getCount();
+    for(%c = 0; %c < %count; %c++)
     {
-        %brickPos = vectorAdd(getField(%brickData,%c + 1),%vector);
-        %brickColor = getField(%brickData,%c + 2);
-
-        %brick = new fxDTSBrick()
-        {
-            dataBlock = %dataBlock;
-            position = %brickPos;
-            
-            client = %piece.client;
-
-            colorid = %brickColor;
-
-            piece = %piece;
-        };
-        
+        %brick = %brickList.getObject(%c);
         //make turnbased temp bricks if it doesn't exist
         if(!isObject(%client.turnbasedTempBricks))
         {
             %client.turnbasedTempBricks = new scriptGroup(){};
         } 
         %client.turnbasedTempBricks.add(%brick);
-        %c += 3;
+
+        %c++;
     }
 }
 
