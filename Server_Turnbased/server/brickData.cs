@@ -54,7 +54,7 @@ function turnbasedSaveFromDup(%client,%filename)
     %file.close();
     %file.delete();
 }
-function turnbasedLoad(%fileName,%vector,%rotation)
+function turnbasedCache(%fileName)
 {
     %file = new FileObject(){};
     %success = %file.openForRead("config/server/TurnbasedSaves/" @ %filename @ ".txt");
@@ -63,7 +63,86 @@ function turnbasedLoad(%fileName,%vector,%rotation)
         return;
 
     %c = 0;
-    %lowestZ = inf;
+    %count = %file.readLine();
+    //read in bricks
+    while(%c <= %count)
+    {
+        %line = %file.readLine();
+        $TBdatablock[%fileName,%c] = getField(%line,0);
+        $TBposition[%fileName,%c] = getField(%line,1);
+        $TBrotation[%fileName,%c] = getField(%line,2);
+        $TBcolorid[%fileName,%c] = getField(%line,3);
+        $TBcolorfx[%fileName,%c] = getField(%line,4);
+        $TBshapefx[%fileName,%c] = getField(%line,5);
+        $TBprint[%fileName,%c] = getfield(%line,6);
+
+        %c++;
+    }
+    //read named brick info into a list to be reference later
+    %nameCount = 0;
+    while(!%file.isEOF())
+    {
+        %line = %file.readLine();
+        %name = getField(%line,0);
+        %list = getField(%line,1);
+
+        %c = 0;
+        while((%number = getWord(%list,%c)) !$= "")
+        {
+            $TBname[%filename,%number] = %name;
+
+            %c++;
+        }
+    }
+}
+function turnbasedCachLoad(%filename,%vector,%rotation)
+{
+    talk("loading from cache");
+
+    //we want to store the bricks in a list for a return
+    %brickList = new SimSet(){};
+    //create bricks
+    %c = 0;
+    while($TBdatablock[%fileName,%c] !$= "")
+    {
+        %brick = new fxDTSBrick()
+        {
+            dataBlock = $TBdatablock[%fileName,%c].getId();
+            position = vectorAdd($TBposition[%fileName,%c],%vector); //add in our vector
+            rotation = $TBrotation[%fileName,%c];
+            colorid = $TBcolorid[%fileName,%c];
+            colorfx = $TBcolorfx[%fileName,%c];
+            shapefx = $TBshapefx[%fileName,%c];
+            print = $TBprint[%fileName,%c];
+            // isPlanted = true;
+        };
+        // %brick.plant();
+        // %brick.setTrusted(true);
+
+        %brickList.add(%brick);
+
+        //global named brick list whatever for easyness
+        $turnbasedNameBrick[%brick] = $TBname[%fileName,%c];
+
+        //999999
+        mainBrickGroup.getObject(1).add(%brick);
+        %c++;
+    }
+    return %brickList;
+}
+function turnbasedLoad(%fileName,%vector,%rotation)
+{
+    //load from the cache if it's availible
+    if($TBdatablock[%fileName,0] !$= "")
+        return turnbasedCachLoad(%fileName,%vector,%rotation);
+
+    %file = new FileObject(){};
+    %success = %file.openForRead("config/server/TurnbasedSaves/" @ %filename @ ".txt");
+
+    if(!%success)
+        return;
+
+    %c = 0;
     %count = %file.readLine();
     //read in bricks
     while(%c <= %count)
@@ -95,8 +174,6 @@ function turnbasedLoad(%fileName,%vector,%rotation)
             %c++;
         }
     }
-    
-
     //we want to store the bricks in a list for a return
     %brickList = new SimSet(){};
     //create bricks

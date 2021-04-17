@@ -1,7 +1,10 @@
 //makes a singleton object to hold inital data
 function server_CreateMap(%name,%brickData,%description,%values)
 {
-    //might want to consider loading bricks here
+    //removing previous instances
+    if(isObject("TBM" @ %name))
+        ("TBM" @ %name).delete();
+    
     %m = new ScriptObject("TBM" @ %name)
     {
         class = "TurnbasedMap";
@@ -9,17 +12,48 @@ function server_CreateMap(%name,%brickData,%description,%values)
         pieceName = %name;
         brickData = %brickData;
     };
+    //bricks are chached into global variables
+    turnbasedCache(%brickData);
+    //maybe cache the 2d map array here
+    %m.mapArray[0,0] = 0;
+    //use cached version to figure a corner and then values for bricks
+    %c = 0;
+    %xmin = inf;
+    %ymin = inf;
+    while((%pos = $TBposition[%brickData,%c]) !$= "")
+    {
+        if($TBname[%brickData,%c] !$= "")
+        {
+            %x = getWord(%pos,0);
+            %y = getWord(%pos,1);
+
+            if(%xmin > %x)
+                %xmin = %x;
+
+            if(%ymin > %y)
+                %ymin = %y;
+        }
+        %c++;
+    }
+    //caching the map values
+    for(%i = 0; %i < %c; %i++)
+    {
+        if($TBname[%brickData,%i] !$= "")
+        {
+            %position = $TBposition[%brickData,%i];
+            %position = vectorScale(vectorSub(%position,%xmin SPC %ymin SPC "0"),2);
+
+            $TBmapPosition[%brickData,%i] = getWord(%position,0) @ "," @ getword(%position,1);
+        }
+    }
 
     $Turnabsed::Server::MapDataGroup.add(%m);
-    //maybe cache the 2d map array here
 }
 
-function TurnbasedMap::NewMap(%map,%client,%vector)
+function TurnbasedMap::NewMap(%map,%vector)
 {
     //map storage object
     %m = new ScriptObject(){};
-    %xmin = inf;
-    %ymin = inf;
     //create bricks
     %brickData = %map.brickData;
 
@@ -27,9 +61,9 @@ function TurnbasedMap::NewMap(%map,%client,%vector)
     %m.brickList = %brickList;
 
     %count = %bricklist.getCount();
-    for(%c = 0; %c < %count; %c++)
+    for(%i = 0; %i < %count; %i++)
     {
-        %brick = %brickList.getObject(%c);
+        %brick = %brickList.getObject(%i);
         %brickName = $turnbasedNameBrick[%brick];
 
         %brick.isPlanted = true;
@@ -40,31 +74,7 @@ function TurnbasedMap::NewMap(%map,%client,%vector)
         %brick.map = %m;
 
         if(%brickName !$= "")
-        {
-            //add it as a map
-            %position = %brick.position;
-            %x = getWord(%position,0);
-            %y = getWord(%position,1);
-
-            if(%xmin > %x)
-                %xmin = %x;
-
-            if(%ymin > %y)
-                %ymin = %y;
-        }
+            %m.mapPosition[$TBmapPosition[%brickData,%i]] = %brick;
     }
-    for(%c = 0; %c < %count; %c++)
-    {
-        %brick = %brickList.getObject(%c);
-        %brickName = $turnbasedNameBrick[%brick];
-
-        if(%brickName !$= "")
-        {
-            //add it as a map
-            %position = %brick.position;
-            %position = vectorScale(vectorSub(%position,%xmin SPC %ymin SPC "0"),2);
-
-            %m.map[getWord(%position,0), getWord(%position,1)] = %brick;
-        }
-    }
+    return %m;
 }
